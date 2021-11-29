@@ -8,11 +8,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 void main() async {
   Hive.registerAdapter(ChecklistItemAdapter());
   Hive.registerAdapter(ChecklistAdapter());
-  Hive.registerAdapter(ListOfChecklistsAdapter());
   await Hive.initFlutter();
-  var box = await Hive.openBox('checklists');
+  final box = await Hive.openBox<Checklist>('checklists');
   runApp(ProviderScope(
-    overrides: [hiveboxProvider.overrideWithValue(box)],
+    overrides: [checklistsBoxProvider.overrideWithValue(box)],
     child: const ChecklistApp(),
   ));
 }
@@ -23,7 +22,7 @@ class ChecklistApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Checklist App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),

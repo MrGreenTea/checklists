@@ -3,37 +3,38 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'types.dart';
 
-final hiveboxProvider = Provider<Box>((_) {
+final checklistsBoxProvider = Provider<ChecklistBox>((_) {
   throw UnimplementedError();
 });
 
-final savedChecklistProvider = Provider((ref) {
-  final box = ref.watch(hiveboxProvider);
-  final checklists = box.watch(key: "allChecklists");
-  final checklists =
-      (box.get("allChecklists", defaultValue: []) as List<dynamic>)
-          .cast<Checklist>();
-  return checklists;
+final checklistsEventProvider = StreamProvider((ref) {
+  final box = ref.watch(checklistsBoxProvider);
+  return box.watch();
 });
 
-final checklistsProvider =
-    StateNotifierProvider<ListOfChecklists, List<Checklist>>((ref) {
-  final box = ref.watch(hiveboxProvider);
-  final checklists = ref.watch(savedChecklistProvider);
-
-  final lister = ListOfChecklists(checklists);
-  lister.addListener((state) => box.put("allChecklists", state));
-  return lister;
+final checklistsProvider = Provider((ref) {
+  final box = ref.watch(checklistsBoxProvider);
+  // so we trigger a new value on every event
+  ref.watch(checklistsEventProvider);
+  return box.values;
 });
 
-final allChecklistIDsProvider =
-    Provider((ref) => ref.watch(checklistsProvider).map((e) => e.id));
+final allChecklistIDsProvider = Provider((ref) {
+  return ref.watch(checklistsProvider).map((e) => e.id);
+});
+
+final checklistEventProvider =
+    StreamProvider.family<BoxEvent, String>((ref, id) {
+  final box = ref.watch(checklistsBoxProvider);
+  return box.watch(key: id);
+});
 
 final checklistProvider =
     StateNotifierProvider.family<Checklist, List<ChecklistItem>, ChecklistID>(
         (ref, id) {
-  final allChecklists = ref.watch(checklistsProvider);
-  return allChecklists.firstWhere((element) => element.id == id);
+  final box = ref.watch(checklistsBoxProvider);
+  ref.watch(checklistEventProvider(id));
+  return box.get(id);
 });
 
 final checklistTitleProvider = Provider.family(

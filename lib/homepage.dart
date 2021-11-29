@@ -35,8 +35,8 @@ class AddChecklistDialog extends HookConsumerWidget {
         ElevatedButton(
             onPressed: () {
               ref
-                  .read(checklistsProvider.notifier)
-                  .createChecklist(title.value);
+                  .read(checklistsBoxProvider)
+                  .add(Checklist.fromTitle(title.value));
               Navigator.pop(context);
             },
             child: const Text("Add"))

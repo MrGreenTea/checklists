@@ -59,7 +59,7 @@ class ChecklistAdapter extends TypeAdapter<Checklist> {
     return Checklist(
       id: fields[0] as String,
       title: fields[1] as String,
-      state: (fields[2] as List).cast<ChecklistItem>(),
+      items: (fields[2] as List).cast<ChecklistItem>(),
     );
   }
 
@@ -72,7 +72,7 @@ class ChecklistAdapter extends TypeAdapter<Checklist> {
       ..writeByte(1)
       ..write(obj.title)
       ..writeByte(2)
-      ..write(obj.state);
+      ..write(obj.items);
   }
 
   @override
@@ -82,40 +82,6 @@ class ChecklistAdapter extends TypeAdapter<Checklist> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ChecklistAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
-class ListOfChecklistsAdapter extends TypeAdapter<ListOfChecklists> {
-  @override
-  final int typeId = 3;
-
-  @override
-  ListOfChecklists read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return ListOfChecklists(
-      (fields[1] as List).cast<Checklist>(),
-    );
-  }
-
-  @override
-  void write(BinaryWriter writer, ListOfChecklists obj) {
-    writer
-      ..writeByte(1)
-      ..writeByte(1)
-      ..write(obj.state);
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ListOfChecklistsAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
