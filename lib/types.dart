@@ -6,6 +6,9 @@ part 'types.g.dart';
 
 const _uuid = Uuid();
 
+typedef ChecklistKey = dynamic;
+// the keys are always dynamic because of hive
+typedef ChecklistEntry = MapEntry<ChecklistKey, Checklist>;
 typedef ChecklistBox = Box<Checklist>;
 typedef ChecklistID = String;
 typedef ChecklistItemID = String;
@@ -33,17 +36,15 @@ class ChecklistItem {
 @HiveType(typeId: 2)
 class Checklist {
   @HiveField(0)
-  final ChecklistID id;
-  @HiveField(1)
   final String title;
 
-  @HiveField(2)
+  @HiveField(1)
   final List<ChecklistItem> items;
 
-  Checklist({required this.id, required this.title, required this.items});
+  Checklist({required this.title, required this.items});
 
   factory Checklist.fromTitle(String title) {
-    return Checklist(id: _uuid.v4(), title: title, items: []);
+    return Checklist(title: title, items: []);
   }
 }
 
@@ -54,7 +55,7 @@ class ChecklistNotifier extends StateNotifier<Checklist> {
     final resetItems = state.items
         .map((e) => ChecklistItem(id: e.id, title: e.title, completed: false))
         .toList(growable: false);
-    state = Checklist(id: state.id, title: state.title, items: resetItems);
+    state = Checklist(title: state.title, items: resetItems);
   }
 
   List<ChecklistItem> get items {
@@ -69,12 +70,11 @@ class ChecklistNotifier extends StateNotifier<Checklist> {
         return e;
       }
     }).toList(growable: false);
-    state = Checklist(id: id, title: state.title, items: newItems);
+    state = Checklist(title: state.title, items: newItems);
   }
 
   void addItem(String title) {
     state = Checklist(
-        id: state.id,
         title: state.title,
         items: [...state.items, ChecklistItem.fromTitle(title)]);
   }

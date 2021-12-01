@@ -57,21 +57,18 @@ class ChecklistAdapter extends TypeAdapter<Checklist> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Checklist(
-      id: fields[0] as String,
-      title: fields[1] as String,
-      items: (fields[2] as List).cast<ChecklistItem>(),
+      title: fields[0] as String,
+      items: (fields[1] as List).cast<ChecklistItem>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Checklist obj) {
     writer
-      ..writeByte(3)
-      ..writeByte(0)
-      ..write(obj.id)
-      ..writeByte(1)
-      ..write(obj.title)
       ..writeByte(2)
+      ..writeByte(0)
+      ..write(obj.title)
+      ..writeByte(1)
       ..write(obj.items);
   }
 

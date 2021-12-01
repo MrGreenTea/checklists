@@ -35,9 +35,7 @@ class AddChecklistDialog extends HookConsumerWidget {
         ElevatedButton(
             onPressed: () {
               final newChecklist = Checklist.fromTitle(title.value);
-              ref
-                  .read(checklistsBoxProvider)
-                  .put(newChecklist.id, newChecklist);
+              ref.read(checklistsBoxProvider).add(newChecklist);
               Navigator.pop(context);
             },
             child: const Text("Add"))
@@ -71,24 +69,26 @@ class AllChecklists extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final checklists = ref.watch(checklistsProvider);
+    final checklistEntries = ref.watch(checklistsEntryProvider);
 
     return ListView(
       children: [
-        for (final list in checklists)
-          ChecklistTile(key: ValueKey(list.id), list: list)
+        for (final listEntry in checklistEntries)
+          ChecklistTile(key: ValueKey(listEntry.key), entry: listEntry)
       ],
     );
   }
 }
 
 class ChecklistTile extends ConsumerWidget {
-  final Checklist list;
+  final ChecklistEntry entry;
 
-  const ChecklistTile({Key? key, required this.list}) : super(key: key);
+  const ChecklistTile({Key? key, required this.entry}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final box = ref.watch(checklistsBoxProvider);
+
     return Card(
         child: ListTile(
       onTap: () => Navigator.push(
@@ -99,11 +99,11 @@ class ChecklistTile extends ConsumerWidget {
                   overrides: [
                     // set the open checklist value
                     openChecklistProvider
-                        .overrideWithValue(ChecklistNotifier(list))
+                        .overrideWithValue(makeNotifier(entry, box))
                   ],
                 )),
       ),
-      title: Text(list.title),
+      title: Text(entry.value.title),
     ));
   }
 }

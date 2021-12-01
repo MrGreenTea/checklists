@@ -12,14 +12,26 @@ final checklistsEventProvider = StreamProvider((ref) {
   return box.watch();
 });
 
-final checklistsProvider = Provider<Iterable<Checklist>>((ref) {
+final checklistsProvider = Provider<Map<dynamic, Checklist>>((ref) {
   final box = ref.watch(checklistsBoxProvider);
   // trigger recalc on change events
   ref.watch(checklistsEventProvider);
-  return box.values;
+  return box.toMap();
+});
+
+final checklistsEntryProvider = Provider<Iterable<ChecklistEntry>>((ref) {
+  return ref.watch(checklistsProvider).entries;
 });
 
 final openChecklistProvider =
     StateNotifierProvider<ChecklistNotifier, Checklist>((ref) {
   throw StateError("Can only be accessed inside checklist page");
 });
+
+ChecklistNotifier makeNotifier(ChecklistEntry entry, ChecklistBox box) {
+  final notifier = ChecklistNotifier(entry.value);
+  notifier.addListener((state) {
+    box.put(entry.key, state);
+  });
+  return notifier;
+}
