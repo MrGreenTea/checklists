@@ -5,33 +5,38 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class ChecklistPage extends ConsumerWidget {
-  final ChecklistID id;
-  const ChecklistPage({Key? key, required this.id}) : super(key: key);
+  const ChecklistPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final checklist = ref.watch(checklistProvider(id).notifier);
-    final title = ref.watch(checklistTitleProvider(id));
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
-        actions: [ResetAllButton(list: checklist)],
+        title: const ChecklistTitle(),
+        actions: const [ResetAllButton()],
       ),
-      body: ChecklistItems(list: checklist),
-      floatingActionButton: AddChecklistItemButton(list: checklist),
+      body: const ChecklistItems(),
+      floatingActionButton: const AddChecklistItemButton(),
     );
   }
 }
 
-class ResetAllButton extends StatelessWidget {
-  final Checklist list;
-
-  const ResetAllButton({Key? key, required this.list}) : super(key: key);
+class ChecklistTitle extends ConsumerWidget {
+  const ChecklistTitle({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final title = ref.watch(openChecklistProvider.select((lst) => lst.title));
+    return Text(title);
+  }
+}
+
+class ResetAllButton extends ConsumerWidget {
+  const ResetAllButton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
-        onPressed: () => list.resetAll(),
+        onPressed: () => ref.read(openChecklistProvider.notifier).resetAll(),
         icon: const Icon(
           Icons.restart_alt,
         ),
@@ -40,42 +45,40 @@ class ResetAllButton extends StatelessWidget {
 }
 
 class ChecklistItems extends ConsumerWidget {
-  final Checklist list;
-  const ChecklistItems({Key? key, required this.list}) : super(key: key);
+  const ChecklistItems({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = ref.watch(checklistProvider(list.id));
+    final list = ref.watch(openChecklistProvider);
     return ListView(
       children: [
-        for (final item in items)
+        for (final item in list.items)
           ChecklistItemTile(
-            value: item.completed,
-            title: item.title,
-            onChanged: (value) => list.setCompleted(item.id, value ?? false),
+            key: ValueKey(item.id),
+            item: item,
           )
       ],
     );
   }
 }
 
-class ChecklistItemTile extends HookWidget {
-  final String title;
-  final bool value;
-  final ValueChanged<bool?> onChanged;
+class ChecklistItemTile extends ConsumerWidget {
+  final ChecklistItem item;
   const ChecklistItemTile({
     Key? key,
-    required this.title,
-    required this.value,
-    required this.onChanged,
+    required this.item,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    void onChanged(bool? value) => ref
+        .read(openChecklistProvider.notifier)
+        .setCompleted(item.id, value ?? false);
+
     return Card(
       child: CheckboxListTile(
-        value: value,
-        title: Text(title),
+        value: item.completed,
+        title: Text(item.title),
         onChanged: onChanged,
       ),
     );
@@ -83,8 +86,9 @@ class ChecklistItemTile extends HookWidget {
 }
 
 class AddItemDialog extends HookConsumerWidget {
-  final Checklist list;
-  const AddItemDialog({Key? key, required this.list}) : super(key: key);
+  final void Function(String) onAdd;
+
+  const AddItemDialog(this.onAdd, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -97,27 +101,26 @@ class AddItemDialog extends HookConsumerWidget {
       ),
       actions: [
         ElevatedButton(
-            onPressed: () {
-              list.add(title.value);
-              Navigator.pop(context);
-            },
-            child: const Text("Add"))
+            onPressed: () => onAdd(title.value), child: const Text("Add"))
       ],
     );
   }
 }
 
-class AddChecklistItemButton extends StatelessWidget {
-  final Checklist list;
-  const AddChecklistItemButton({Key? key, required this.list})
-      : super(key: key);
+class AddChecklistItemButton extends ConsumerWidget {
+  const AddChecklistItemButton({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    void onAdd(String title) {
+      ref.read(openChecklistProvider.notifier).addItem(title);
+      Navigator.pop(context);
+    }
+
     return FloatingActionButton(
-      onPressed: () => showDialog(
-          context: context, builder: (_) => AddItemDialog(list: list)),
       child: const Icon(Icons.add),
+      onPressed: () =>
+          showDialog(context: context, builder: (_) => AddItemDialog(onAdd)),
     );
   }
 }

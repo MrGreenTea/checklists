@@ -1,11 +1,6 @@
-import 'package:flutter/foundation.dart';
-
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:uuid/uuid.dart';
-
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'types.freezed.dart';
 
 part 'types.g.dart';
 
@@ -16,7 +11,7 @@ typedef ChecklistID = String;
 typedef ChecklistItemID = String;
 
 @HiveType(typeId: 1)
-class ChecklistItem with _$ChecklistItem {
+class ChecklistItem {
   @HiveField(0)
   final ChecklistItemID id;
   @HiveField(1)
@@ -29,6 +24,10 @@ class ChecklistItem with _$ChecklistItem {
     required this.title,
     this.completed = false,
   });
+
+  factory ChecklistItem.fromTitle(String title) {
+    return ChecklistItem(id: _uuid.v4(), title: title);
+  }
 }
 
 @HiveType(typeId: 2)
@@ -45,5 +44,38 @@ class Checklist {
 
   factory Checklist.fromTitle(String title) {
     return Checklist(id: _uuid.v4(), title: title, items: []);
+  }
+}
+
+class ChecklistNotifier extends StateNotifier<Checklist> {
+  ChecklistNotifier(Checklist state) : super(state);
+
+  void resetAll() {
+    final resetItems = state.items
+        .map((e) => ChecklistItem(id: e.id, title: e.title, completed: false))
+        .toList(growable: false);
+    state = Checklist(id: state.id, title: state.title, items: resetItems);
+  }
+
+  List<ChecklistItem> get items {
+    return state.items;
+  }
+
+  void setCompleted(ChecklistItemID id, bool value) {
+    final newItems = state.items.map((e) {
+      if (e.id == id) {
+        return ChecklistItem(id: e.id, title: e.title, completed: value);
+      } else {
+        return e;
+      }
+    }).toList(growable: false);
+    state = Checklist(id: id, title: state.title, items: newItems);
+  }
+
+  void addItem(String title) {
+    state = Checklist(
+        id: state.id,
+        title: state.title,
+        items: [...state.items, ChecklistItem.fromTitle(title)]);
   }
 }

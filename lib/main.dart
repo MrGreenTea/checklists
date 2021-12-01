@@ -1,5 +1,4 @@
 import 'package:checklists/homepage.dart';
-import 'package:checklists/providers.dart';
 import 'package:checklists/types.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -9,10 +8,9 @@ void main() async {
   Hive.registerAdapter(ChecklistItemAdapter());
   Hive.registerAdapter(ChecklistAdapter());
   await Hive.initFlutter();
-  final box = await Hive.openBox<Checklist>('checklists');
-  runApp(ProviderScope(
-    overrides: [checklistsBoxProvider.overrideWithValue(box)],
-    child: const ChecklistApp(),
+  await Hive.openBox<Checklist>('checklists');
+  runApp(const ProviderScope(
+    child: ChecklistApp(),
   ));
 }
 
