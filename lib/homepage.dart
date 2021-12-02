@@ -5,6 +5,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'checklist.dart';
+import 'dismissible.dart';
 
 class Homepage extends StatelessWidget {
   const Homepage({Key? key}) : super(key: key);
@@ -69,12 +70,18 @@ class AllChecklists extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final box = ref.watch(checklistsBoxProvider);
     final checklistEntries = ref.watch(checklistsEntryProvider);
 
     return ListView(
       children: [
         for (final listEntry in checklistEntries)
-          ChecklistTile(key: ValueKey(listEntry.key), entry: listEntry)
+          Card(
+            child: DeleteDismissible(
+                onDismissed: (_) => box.delete(listEntry.key),
+                key: ValueKey(listEntry.key),
+                child: ChecklistTile(entry: listEntry)),
+          )
       ],
     );
   }
@@ -89,21 +96,20 @@ class ChecklistTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final box = ref.watch(checklistsBoxProvider);
 
-    return Card(
-        child: ListTile(
+    return ListTile(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => ProviderScope(
                   child: const ChecklistPage(),
                   overrides: [
-                    // set the open checklist value
+                    // set the open checklist value for the open page
                     openChecklistProvider
                         .overrideWithValue(makeNotifier(entry, box))
                   ],
                 )),
       ),
       title: Text(entry.value.title),
-    ));
+    );
   }
 }

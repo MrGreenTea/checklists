@@ -78,4 +78,21 @@ class ChecklistNotifier extends StateNotifier<Checklist> {
         title: state.title,
         items: [...state.items, ChecklistItem.fromTitle(title)]);
   }
+
+  void removeItem(ChecklistItemID id) {
+    final newItems = state.items
+        .where((element) => element.id != id)
+        .toList(growable: false);
+    state = Checklist(title: state.title, items: newItems);
+  }
+
+  void moveItem(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final newItems = [...state.items];
+    final item = newItems.removeAt(oldIndex);
+    newItems.insert(newIndex, item);
+    state = Checklist(title: state.title, items: newItems);
+  }
 }

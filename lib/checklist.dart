@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import 'dismissible.dart';
+
 class ChecklistPage extends ConsumerWidget {
   const ChecklistPage({Key? key}) : super(key: key);
 
@@ -50,12 +52,20 @@ class ChecklistItems extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(openChecklistProvider);
-    return ListView(
+
+    return ReorderableListView(
+      onReorder: (int oldIndex, int newIndex) {
+        ref.read(openChecklistProvider.notifier).moveItem(oldIndex, newIndex);
+      },
       children: [
         for (final item in list.items)
-          ChecklistItemTile(
+          DeleteDismissible(
+            onDismissed: (_) =>
+                ref.read(openChecklistProvider.notifier).removeItem(item.id),
             key: ValueKey(item.id),
-            item: item,
+            child: ChecklistItemTile(
+              item: item,
+            ),
           )
       ],
     );
