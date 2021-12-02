@@ -46,6 +46,17 @@ class Checklist {
   factory Checklist.fromTitle(String title) {
     return Checklist(title: title, items: []);
   }
+
+  int get completedCount {
+    return items.where((element) => element.completed).length;
+  }
+
+  double get progress {
+    if (items.isEmpty) {
+      return 0.0;
+    }
+    return completedCount / items.length;
+  }
 }
 
 class ChecklistNotifier extends StateNotifier<Checklist> {

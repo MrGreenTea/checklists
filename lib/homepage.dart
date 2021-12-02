@@ -71,18 +71,25 @@ class AllChecklists extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final box = ref.watch(checklistsBoxProvider);
-    final checklistEntries = ref.watch(checklistsEntryProvider);
+    final checklistEntries =
+        ref.watch(checklistsEntryProvider).toList(growable: false);
 
-    return ListView(
-      children: [
-        for (final listEntry in checklistEntries)
-          Card(
-            child: DeleteDismissible(
-                onDismissed: (_) => box.delete(listEntry.key),
-                key: ValueKey(listEntry.key),
-                child: ChecklistTile(entry: listEntry)),
-          )
-      ],
+    return ListView.separated(
+      itemCount: checklistEntries.length,
+      itemBuilder: (BuildContext context, int index) {
+        final listEntry = checklistEntries[index];
+        return DeleteDismissible(
+            onDismissed: (_) => box.delete(listEntry.key),
+            key: ValueKey(listEntry.key),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ChecklistTile(entry: listEntry),
+            ));
+      },
+      separatorBuilder: (BuildContext context, int index) => const Divider(
+        height: 2,
+        thickness: 2,
+      ),
     );
   }
 }
@@ -95,6 +102,7 @@ class ChecklistTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final box = ref.watch(checklistsBoxProvider);
+    final checklist = entry.value;
 
     return ListTile(
       onTap: () => Navigator.push(
@@ -109,7 +117,39 @@ class ChecklistTile extends ConsumerWidget {
                   ],
                 )),
       ),
-      title: Text(entry.value.title),
+      title: Text(checklist.title),
+      leading: ChecklistProgress(value: checklist.progress),
+      trailing: Wrap(
+        spacing: 12,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            "${checklist.completedCount} / ${checklist.items.length}",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blueGrey,
+            ),
+          ),
+          const Icon(
+            Icons.navigate_next,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ChecklistProgress extends StatelessWidget {
+  final double value;
+
+  const ChecklistProgress({Key? key, required this.value}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CircularProgressIndicator(
+      strokeWidth: 5.0,
+      backgroundColor: Colors.blueGrey.shade50,
+      value: value,
     );
   }
 }
