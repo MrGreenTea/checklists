@@ -22,7 +22,7 @@ class ChecklistApp extends StatelessWidget {
     return MaterialApp(
       title: 'Checklist App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.pink,
       ),
       home: const Homepage(),
     );
