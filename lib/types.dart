@@ -57,6 +57,10 @@ class Checklist {
     }
     return completedCount / items.length;
   }
+
+  bool get isFinished {
+    return items.every((element) => element.completed);
+  }
 }
 
 class ChecklistNotifier extends StateNotifier<Checklist> {

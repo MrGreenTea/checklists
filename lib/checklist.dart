@@ -38,30 +38,61 @@ class ResetAllButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
-        onPressed: () => ref.read(openChecklistProvider.notifier).resetAll(),
-        icon: const Icon(
-          Icons.restart_alt,
-        ),
-        tooltip: 'Reset all');
+      onPressed: () => ref.read(openChecklistProvider.notifier).resetAll(),
+      icon: const Icon(
+        Icons.restart_alt,
+      ),
+      tooltip: 'Reset all',
+    );
   }
 }
 
-class ChecklistItems extends ConsumerWidget {
+class ChecklistItems extends HookConsumerWidget {
   const ChecklistItems({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(openChecklistProvider);
+    final notifier = ref.watch(openChecklistProvider.notifier);
+    useEffect(() {
+      final removeListener = notifier.addListener((state) {
+        if (state.items.isNotEmpty && state.isFinished) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text("Checklist Complete!"),
+                content: const Text('Would you like to uncheck the checklist?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('No'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Yes'),
+                    onPressed: () {
+                      notifier.resetAll();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }, fireImmediately: false);
+      return removeListener;
+    });
 
     return ReorderableListView(
-      onReorder: (int oldIndex, int newIndex) {
-        ref.read(openChecklistProvider.notifier).moveItem(oldIndex, newIndex);
-      },
+      onReorder: (int oldIndex, int newIndex) =>
+          notifier.moveItem(oldIndex, newIndex),
       children: [
         for (final item in list.items)
           DeleteDismissible(
-            onDismissed: (_) =>
-                ref.read(openChecklistProvider.notifier).removeItem(item.id),
+            onDismissed: (_) => notifier.removeItem(item.id),
             key: ValueKey(item.id),
             child: ChecklistItemTile(
               item: item,
@@ -111,7 +142,9 @@ class AddItemDialog extends HookConsumerWidget {
       ),
       actions: [
         ElevatedButton(
-            onPressed: () => onAdd(title.value), child: const Text("Add"))
+          onPressed: () => onAdd(title.value),
+          child: const Text("Add"),
+        )
       ],
     );
   }
