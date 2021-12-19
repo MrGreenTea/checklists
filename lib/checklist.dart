@@ -47,6 +47,40 @@ class ResetAllButton extends ConsumerWidget {
   }
 }
 
+void useAutoReset(BuildContext context, ChecklistNotifier notifier) {
+  useEffect(() {
+    final removeListener = notifier.addListener((state) {
+      if (state.items.isNotEmpty && state.isFinished) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Checklist Complete!"),
+              content: const Text('Would you like to uncheck the checklist?'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('No'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: const Text('Yes'),
+                  onPressed: () {
+                    notifier.resetAll();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }, fireImmediately: false);
+    return removeListener;
+  }, [notifier, context]);
+}
+
 class ChecklistItems extends HookConsumerWidget {
   const ChecklistItems({Key? key}) : super(key: key);
 
@@ -54,37 +88,7 @@ class ChecklistItems extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(openChecklistProvider);
     final notifier = ref.watch(openChecklistProvider.notifier);
-    useEffect(() {
-      final removeListener = notifier.addListener((state) {
-        if (state.items.isNotEmpty && state.isFinished) {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text("Checklist Complete!"),
-                content: const Text('Would you like to uncheck the checklist?'),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('No'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  TextButton(
-                    child: const Text('Yes'),
-                    onPressed: () {
-                      notifier.resetAll();
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-        }
-      }, fireImmediately: false);
-      return removeListener;
-    });
+    useAutoReset(context, notifier);
 
     return ReorderableListView(
       onReorder: (int oldIndex, int newIndex) =>
@@ -117,9 +121,25 @@ class ChecklistItemTile extends ConsumerWidget {
         .setCompleted(item.id, value ?? false);
 
     return Card(
+      elevation: item.completed ? 0 : null,
+      color: item.completed ? Colors.transparent : null,
       child: CheckboxListTile(
         value: item.completed,
-        title: Text(item.title),
+        title: AnimatedDefaultTextStyle(
+          child: Text(
+            item.title,
+          ),
+          style: item.completed
+              ? const TextStyle(
+                  inherit: true,
+                  color: Colors.grey,
+                  decoration: TextDecoration.lineThrough)
+              : const TextStyle(
+                  inherit: true,
+                  color: Colors.black,
+                  decoration: TextDecoration.none),
+          duration: const Duration(milliseconds: 500),
+        ),
         onChanged: onChanged,
       ),
     );
